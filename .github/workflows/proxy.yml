@@ -1,0 +1,31 @@
+name: Proxy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run a proxy server
+      run: |
+        sudo apt update
+        sudo apt install -y nginx
+        echo '
+        server {
+            listen 80;
+            location / {
+                proxy_pass https://example.com;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+        }' | sudo tee /etc/nginx/sites-available/default
+        sudo systemctl restart nginx
